@@ -371,15 +371,41 @@ sub _init_ffi {
         FFI::Raw::ptr,
     );
 
-    $ffi->{memcpy} = FFI::Raw->new(
-        'libc.so.6' => 'memcpy',
-        FFI::Raw::ptr,  # dest filled
-        FFI::Raw::ptr,  # dest buf
-        FFI::Raw::ptr,  # src
-        FFI::Raw::int   # buf size
-    );
+    $ffi->{memcpy} = $self->_load_memcpy();
 
     return $ffi;
+}
+
+sub _load_memcpy {
+    # need to check platform specific libc names
+    my @libc_sonames = qw(libc.so.6 libc.dylib);
+
+    my $memcpy;
+    LOAD_MEMCPY:
+    for my $soname (@libc_sonames) {
+        try {
+            $memcpy = FFI::Raw->new(
+                $soname => 'memcpy',
+                FFI::Raw::ptr,  # dest filled
+                FFI::Raw::ptr,  # dest buf
+                FFI::Raw::ptr,  # src
+                FFI::Raw::int   # buf size
+            );
+        }
+        catch {
+            undef $memcpy;
+        };
+
+        last LOAD_MEMCPY if defined $memcpy;
+    }
+
+    unless (defined $memcpy) {
+        confess
+            qq(Could not find libc for this system, tried:\n),
+            join(', ', @libc_sonames);
+    }
+
+    return $memcpy;
 }
 
 __PACKAGE__->meta->make_immutable();
