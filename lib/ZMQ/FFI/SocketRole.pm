@@ -4,8 +4,6 @@ use Moo::Role;
 
 use FFI::Raw;
 
-with q(ZMQ::FFI::SoWrapper);
-
 has ctx => (
     is       => 'ro',
     required => 1,

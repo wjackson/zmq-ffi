@@ -6,6 +6,8 @@ use namespace::autoclean;
 no if $] >= 5.018, warnings => "experimental";
 use feature 'switch';
 
+with q(ZMQ::FFI::SoWrapper);
+
 use Carp;
 use FFI::Raw;
 use ZMQ::FFI::Constants qw(:all);
@@ -25,6 +27,8 @@ has ffi => (
 
 sub BUILD {
     my $self = shift;
+
+    $self->_err_handler;
 
     $self->_socket( $self->ffi->{zmq_socket}->($self->_ctx, $self->type) );
 
